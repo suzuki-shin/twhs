@@ -23,6 +23,14 @@ import Common
 
 main :: IO ()
 main = do
+    mAccessToken <- lookupEnv "OAUTH_ACCESS_TOKEN"
+    mAccessSecret <- lookupEnv "OAUTH_ACCESS_SECRET"
+    if length (catMaybes [mAccessToken, mAccessSecret]) < 2
+        then oauthPin
+        else action
+
+action :: IO ()
+action = do
     args <- getArgs
     if null args
         then timeline
