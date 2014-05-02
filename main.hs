@@ -23,11 +23,11 @@ import Common
 
 main :: IO ()
 main = do
-    mAccessToken <- lookupEnv "OAUTH_ACCESS_TOKEN"
-    mAccessSecret <- lookupEnv "OAUTH_ACCESS_SECRET"
-    if length (catMaybes [mAccessToken, mAccessSecret]) < 2
-        then oauthPin
-        else action
+    aTokenExists <- isJust <$> lookupEnv "OAUTH_ACCESS_TOKEN"
+    aSecretExists <- isJust <$> lookupEnv "OAUTH_ACCESS_SECRET"
+    if aTokenExists && aSecretExists
+        then action
+        else oauthPin
 
 action :: IO ()
 action = do
