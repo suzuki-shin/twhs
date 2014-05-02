@@ -17,8 +17,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 executable twhs
-  main-is:             post.hs
---   main-is:             simple.hs
+  main-is:             main.hs
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
