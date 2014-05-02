@@ -1,53 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+
+-- Example:
+--   $ export OAUTH_CONSUMER_KEY="your consumer key"
+--   $ export OAUTH_CONSUMER_SECRET="your consumer secret"
+--   $ runhaskell oauth_pin.hs
+
 module Main where
 
-import Control.Applicative
-import Control.Lens
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Control
+import Web.Twitter.Conduit
+import Web.Authenticate.OAuth as OA
+import Network.HTTP.Conduit
+import qualified Data.Conduit as C
+import qualified Data.ByteString.Char8 as S8
 import Data.Maybe
 import Data.Monoid
-import Network.HTTP.Conduit
+import Control.Monad.Trans.Control
+import Control.Monad.IO.Class
 import System.Environment
 import System.IO (hFlush, stdout)
-import Web.Authenticate.OAuth as OA
-import Web.Twitter.Conduit
-import qualified Data.ByteString.Char8 as S8
-import qualified Data.Conduit as C
-import qualified Data.Conduit.List as CL
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
-
-import Common
-
-main :: IO ()
-main = do
-    args <- getArgs
-    if null args
-        then timeline
-        else post
-
-post :: IO ()
-post = runTwitterFromEnv' $ do
-    status <- T.concat . map T.pack <$> liftIO getArgs
-    liftIO $ T.putStrLn $ "Post message: " <> status
-    res <- call $ update status
-    liftIO $ print res
-
-timeline :: IO ()
-timeline = runTwitterFromEnv' $ do
-    liftIO . putStrLn $ "# your home timeline (up to 100 tweets):"
-    sourceWithMaxId homeTimeline
-        C.$= CL.isolate 100
-        C.$$ CL.mapM_ $ \status -> liftIO $ do
-            T.putStrLn $ T.concat [ T.pack . show $ status ^. statusId
-                                  , ": "
-                                  , status ^. statusUser . userScreenName
-                                  , ": "
-                                  , status ^. statusText
-                                  ]
-
 
 getTokens :: IO OAuth
 getTokens = do
@@ -76,8 +47,8 @@ authorize oauth mgr = do
         hFlush stdout
         S8.getLine
 
-oauthPin :: IO ()
-oauthPin = do
+main :: IO ()
+main = do
     tokens <- getTokens
     Credential cred <- liftIO $ withManager $ authorize tokens
     print cred
