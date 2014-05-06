@@ -20,13 +20,15 @@ import System.Environment
 import Control.Monad.Logger
 import Control.Lens
 
+import qualified TwhsConfig as Config (oauthConsumerKey, oauthConsumerSecret)
+
 getOAuthTokens :: IO (OAuth, Credential)
 getOAuthTokens = do
-    consumerKey <- getEnv' "OAUTH_CONSUMER_KEY"
-    consumerSecret <- getEnv' "OAUTH_CONSUMER_SECRET"
     accessToken <- getEnv' "OAUTH_ACCESS_TOKEN"
     accessSecret <- getEnv' "OAUTH_ACCESS_SECRET"
-    let oauth = twitterOAuth
+    let consumerKey = S8.pack Config.oauthConsumerKey
+        consumerSecret = S8.pack Config.oauthConsumerSecret
+        oauth = twitterOAuth
             { oauthConsumerKey = consumerKey
             , oauthConsumerSecret = consumerSecret
             }

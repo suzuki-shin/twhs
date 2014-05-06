@@ -20,6 +20,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 
 import Common
+import qualified TwhsConfig as Config (oauthConsumerKey, oauthConsumerSecret)
 
 main :: IO ()
 main = do
@@ -59,8 +60,8 @@ timeline = runTwitterFromEnv' $ do
 
 getTokens :: IO OAuth
 getTokens = do
-    consumerKey <- getEnv "OAUTH_CONSUMER_KEY"
-    consumerSecret <- getEnv "OAUTH_CONSUMER_SECRET"
+    let consumerKey = Config.oauthConsumerKey
+        consumerSecret = Config.oauthConsumerSecret
     return $
         twitterOAuth
         { oauthConsumerKey = S8.pack consumerKey
@@ -91,8 +92,6 @@ oauthPin = do
     print cred
 
     S8.putStrLn . S8.intercalate "\n" $
-        [ "export OAUTH_CONSUMER_KEY=\"" <> oauthConsumerKey tokens <> "\""
-        , "export OAUTH_CONSUMER_SECRET=\"" <> oauthConsumerSecret tokens <> "\""
-        , "export OAUTH_ACCESS_TOKEN=\"" <> fromMaybe "" (lookup "oauth_token" cred) <> "\""
+        [ "export OAUTH_ACCESS_TOKEN=\"" <> fromMaybe "" (lookup "oauth_token" cred) <> "\""
         , "export OAUTH_ACCESS_SECRET=\"" <> fromMaybe "" (lookup "oauth_token_secret" cred) <> "\""
         ]
