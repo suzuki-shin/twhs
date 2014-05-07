@@ -40,9 +40,14 @@ action = do
 post :: IO ()
 post = runTwitterFromEnv' $ do
     status <- T.concat . map T.pack <$> liftIO getArgs
-    liftIO $ T.putStrLn $ "Post message: " <> status
-    res <- call $ update status
-    liftIO $ print res
+    liftIO $ T.putStrLn $ status <> "[y/N]"
+    ans <- liftIO getLine
+    if ans == "y"
+        then do
+            liftIO $ T.putStrLn $ "Post message: " <> status
+            res <- call $ update status
+            liftIO $ print res
+        else liftIO $ T.putStrLn "canceled."
 
 timeline :: IO ()
 timeline = runTwitterFromEnv' $ do
