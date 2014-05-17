@@ -36,9 +36,10 @@ main = do
 action :: IO ()
 action = do
     args <- getArgs
-    if null args
-        then homeTL 30
-        else post
+    case length args of
+      0 -> homeTL 30
+      1 -> post
+      2 -> reply (read (args!!0)) (T.pack (args!!1))
 
 post :: IO ()
 post = runTwitterFromEnv' $ do
@@ -51,6 +52,25 @@ post = runTwitterFromEnv' $ do
             res <- call $ update status
             liftIO $ print res
         else liftIO $ T.putStrLn "canceled."
+
+reply :: Integer -> T.Text -> IO ()
+reply replyTo status = post_ (update status & inReplyToStatusId ?~ replyTo)
+
+-- post_ :: forall (m :: * -> *) apiName a.
+--          (Show a, MonadBaseControl IO m, MonadIO m, C.MonadUnsafeIO m,
+--           C.MonadThrow m, Data.Aeson.Types.Class.FromJSON a) =>
+--          APIRequest apiName a -> m ()
+post_ update_status = runTwitterFromEnv' $ do
+    status <- (T.intercalate " ") . map T.pack <$> liftIO getArgs
+    liftIO $ T.putStrLn $ status <> "[y/N]"
+    ans <- liftIO getLine
+    if ans == "y"
+        then do
+            liftIO $ T.putStrLn $ "Post message: " <> status
+            res <- call $ update_status
+            liftIO $ print res
+        else liftIO $ T.putStrLn "canceled."
+
 
 homeTL :: Int -> IO ()
 homeTL n = timeline homeTimeline n
