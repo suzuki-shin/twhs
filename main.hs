@@ -39,7 +39,7 @@ action = do
 
 post :: IO ()
 post = runTwitterFromEnv' $ do
-    status <- T.concat . map T.pack <$> liftIO getArgs
+    status <- (T.intercalate " ") . map T.pack <$> liftIO getArgs
     liftIO $ T.putStrLn $ status <> "[y/N]"
     ans <- liftIO getLine
     if ans == "y"
