@@ -27,31 +27,22 @@ import qualified TwhsConfig as Config (oauthConsumerKey, oauthConsumerSecret)
 
 main :: IO ()
 main = do
-    aTokenExists <- isJust <$> lookupEnv "OAUTH_ACCESS_TOKEN"
-    aSecretExists <- isJust <$> lookupEnv "OAUTH_ACCESS_SECRET"
-    if aTokenExists && aSecretExists
-        then action
-        else oauthPin
+  aTokenExists <- isJust <$> lookupEnv "OAUTH_ACCESS_TOKEN"
+  aSecretExists <- isJust <$> lookupEnv "OAUTH_ACCESS_SECRET"
+  if aTokenExists && aSecretExists
+    then action
+    else oauthPin
 
 action :: IO ()
 action = do
-    args <- getArgs
-    case length args of
-      0 -> homeTL 30
-      1 -> post
-      2 -> reply (read (args!!0)) (T.pack (args!!1))
+  args <- getArgs
+  case length args of
+    0 -> homeTL 30
+    1 -> post $ T.pack $ head args
+    2 -> reply (read (args!!0)) (T.pack (args!!1))
 
-post :: IO ()
-post = runTwitterFromEnv' $ do
-    status <- (T.intercalate " ") . map T.pack <$> liftIO getArgs
-    liftIO $ T.putStrLn $ status <> "[y/N]"
-    ans <- liftIO getLine
-    if ans == "y"
-        then do
-            liftIO $ T.putStrLn $ "Post message: " <> status
-            res <- call $ update status
-            liftIO $ print res
-        else liftIO $ T.putStrLn "canceled."
+post :: T.Text -> IO ()
+post status = post_ $ update status
 
 reply :: Integer -> T.Text -> IO ()
 reply replyTo status = post_ (update status & inReplyToStatusId ?~ replyTo)
@@ -61,15 +52,15 @@ reply replyTo status = post_ (update status & inReplyToStatusId ?~ replyTo)
 --           C.MonadThrow m, Data.Aeson.Types.Class.FromJSON a) =>
 --          APIRequest apiName a -> m ()
 post_ update_status = runTwitterFromEnv' $ do
-    status <- (T.intercalate " ") . map T.pack <$> liftIO getArgs
-    liftIO $ T.putStrLn $ status <> "[y/N]"
-    ans <- liftIO getLine
-    if ans == "y"
-        then do
-            liftIO $ T.putStrLn $ "Post message: " <> status
-            res <- call $ update_status
-            liftIO $ print res
-        else liftIO $ T.putStrLn "canceled."
+  status <- (T.intercalate " ") . map T.pack <$> liftIO getArgs
+  liftIO $ T.putStrLn $ status <> "[y/N]"
+  ans <- liftIO getLine
+  if ans == "y"
+    then do
+      liftIO $ T.putStrLn $ "Post message: " <> status
+      res <- call $ update_status
+      liftIO $ print res
+    else liftIO $ T.putStrLn "canceled."
 
 
 homeTL :: Int -> IO ()
@@ -87,51 +78,50 @@ timeline :: forall (m :: * -> *) apiName.
              C.MonadThrow m) =>
             APIRequest apiName [Status] -> Int -> m ()
 timeline timeline_ n = runTwitterFromEnv' $ do
-    sourceWithMaxId timeline_
-        C.$= CL.isolate n
-        C.$$ CL.mapM_ $ \status -> liftIO $ do
-            T.putStrLn $ T.concat [ T.pack . show $ status ^. statusId
-                                  , ": "
-                                  , status ^. statusUser . userScreenName
-                                  , ": "
-                                  , status ^. statusText
-                                  ]
+  sourceWithMaxId timeline_
+    C.$= CL.isolate n
+    C.$$ CL.mapM_ $ \status -> liftIO $ do
+      T.putStrLn $ T.concat [ T.pack . show $ status ^. statusId
+                            , ": "
+                            , status ^. statusUser . userScreenName
+                            , ": "
+                            , status ^. statusText
+                            ]
 
 
 getTokens :: IO OAuth
 getTokens = do
-    let consumerKey = Config.oauthConsumerKey
-        consumerSecret = Config.oauthConsumerSecret
-    return $
-        twitterOAuth
-        { oauthConsumerKey = S8.pack consumerKey
-        , oauthConsumerSecret = S8.pack consumerSecret
-        , oauthCallback = Just "oob"
-        }
+  let consumerKey = Config.oauthConsumerKey
+      consumerSecret = Config.oauthConsumerSecret
+  return $ twitterOAuth {
+      oauthConsumerKey = S8.pack consumerKey
+    , oauthConsumerSecret = S8.pack consumerSecret
+    , oauthCallback = Just "oob"
+    }
 
 authorize :: (MonadBaseControl IO m, C.MonadResource m)
           => OAuth -- ^ OAuth Consumer key and secret
           -> Manager
           -> m Credential
 authorize oauth mgr = do
-    cred <- OA.getTemporaryCredential oauth mgr
-    let url = OA.authorizeUrl oauth cred
-    pin <- getPIN url
-    OA.getAccessToken oauth (OA.insert "oauth_verifier" pin cred) mgr
+  cred <- OA.getTemporaryCredential oauth mgr
+  let url = OA.authorizeUrl oauth cred
+  pin <- getPIN url
+  OA.getAccessToken oauth (OA.insert "oauth_verifier" pin cred) mgr
   where
     getPIN url = liftIO $ do
-        putStrLn $ "browse URL: " ++ url
-        putStr "> what was the PIN twitter provided you with? "
-        hFlush stdout
-        S8.getLine
+      putStrLn $ "browse URL: " ++ url
+      putStr "> what was the PIN twitter provided you with? "
+      hFlush stdout
+      S8.getLine
 
 oauthPin :: IO ()
 oauthPin = do
-    tokens <- getTokens
-    Credential cred <- liftIO $ withManager $ authorize tokens
-    print cred
+  tokens <- getTokens
+  Credential cred <- liftIO $ withManager $ authorize tokens
+  print cred
 
-    S8.putStrLn . S8.intercalate "\n" $
-        [ "export OAUTH_ACCESS_TOKEN=\"" <> fromMaybe "" (lookup "oauth_token" cred) <> "\""
-        , "export OAUTH_ACCESS_SECRET=\"" <> fromMaybe "" (lookup "oauth_token_secret" cred) <> "\""
-        ]
+  S8.putStrLn . S8.intercalate "\n" $
+    [ "export OAUTH_ACCESS_TOKEN=\"" <> fromMaybe "" (lookup "oauth_token" cred) <> "\""
+    , "export OAUTH_ACCESS_SECRET=\"" <> fromMaybe "" (lookup "oauth_token_secret" cred) <> "\""
+    ]
