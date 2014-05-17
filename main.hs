@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE KindSignatures #-}
+
 module Main where
 
 import Control.Applicative
@@ -34,7 +37,7 @@ action :: IO ()
 action = do
     args <- getArgs
     if null args
-        then timeline
+        then homeTL 30
         else post
 
 post :: IO ()
@@ -49,11 +52,20 @@ post = runTwitterFromEnv' $ do
             liftIO $ print res
         else liftIO $ T.putStrLn "canceled."
 
-timeline :: IO ()
-timeline = runTwitterFromEnv' $ do
-    liftIO . putStrLn $ "# your home timeline (up to 100 tweets):"
-    sourceWithMaxId homeTimeline
-        C.$= CL.isolate 100
+homeTL :: Int -> IO ()
+homeTL n = timeline homeTimeline n
+
+mentionTL :: Int -> IO ()
+mentionTL n = timeline mentionsTimeline n
+
+timeline :: forall (m :: * -> *) apiName.
+            (HasMaxIdParam (APIRequest apiName [Status]),
+             MonadBaseControl IO m, MonadIO m, C.MonadUnsafeIO m,
+             C.MonadThrow m) =>
+            APIRequest apiName [Status] -> Int -> m ()
+timeline timeline_ n = runTwitterFromEnv' $ do
+    sourceWithMaxId timeline_
+        C.$= CL.isolate n
         C.$$ CL.mapM_ $ \status -> liftIO $ do
             T.putStrLn $ T.concat [ T.pack . show $ status ^. statusId
                                   , ": "
