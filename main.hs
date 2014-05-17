@@ -58,6 +58,9 @@ homeTL n = timeline homeTimeline n
 mentionTL :: Int -> IO ()
 mentionTL n = timeline mentionsTimeline n
 
+userTL :: String -> Int -> IO ()
+userTL uName n = timeline (userTimeline (ScreenNameParam uName)) n
+
 timeline :: forall (m :: * -> *) apiName.
             (HasMaxIdParam (APIRequest apiName [Status]),
              MonadBaseControl IO m, MonadIO m, C.MonadUnsafeIO m,
