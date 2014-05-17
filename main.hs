@@ -21,6 +21,8 @@ import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import System.Console.GetOpt
+import Data.Maybe ( fromMaybe )
 
 import Common
 import qualified TwhsConfig as Config (oauthConsumerKey, oauthConsumerSecret)
@@ -125,3 +127,24 @@ oauthPin = do
     [ "export OAUTH_ACCESS_TOKEN=\"" <> fromMaybe "" (lookup "oauth_token" cred) <> "\""
     , "export OAUTH_ACCESS_SECRET=\"" <> fromMaybe "" (lookup "oauth_token_secret" cred) <> "\""
     ]
+
+options :: [OptDescr Flag]
+options = [ Option ['v']     ["verbose"] (NoArg Verbose)       "chatty output on stderr"
+ , Option ['V','?'] ["version"] (NoArg Version)       "show version number"
+ , Option ['o']     ["output"]  (OptArg outp "FILE")  "output FILE"
+ , Option ['c']     []          (OptArg inp  "FILE")  "input FILE"
+ , Option ['L']     ["libdir"]  (ReqArg LibDir "DIR") "library directory"
+ ]
+
+inp,outp :: Maybe String -> Flag
+outp = Output . fromMaybe "stdout"
+inp  = Input  . fromMaybe "stdin"
+
+data Flag = Verbose | Version | Input String | Output String | LibDir String deriving Show
+
+compilerOpts :: [String] -> IO ([Flag], [String])
+compilerOpts argv = 
+   case getOpt Permute options argv of
+      (o,n,[]  ) -> return (o,n)
+      (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
+  where header = "Usage: ic [OPTION...] files..."
