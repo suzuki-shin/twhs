@@ -22,7 +22,6 @@ import qualified Data.Conduit.List as CL
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import System.Console.GetOpt
-import Data.Maybe ( fromMaybe )
 
 import Common
 import qualified TwhsConfig as Config (oauthConsumerKey, oauthConsumerSecret)
@@ -37,11 +36,10 @@ main = do
 
 action :: IO ()
 action = do
-  args <- getArgs
-  case length args of
-    0 -> homeTL 30
-    1 -> post $ T.pack $ head args
-    2 -> reply (read (args!!0)) (T.pack (args!!1))
+  argv <- getArgs
+  a@(option, mess) <- compilerOpts argv
+  print a
+  print "hgoe"
 
 post :: T.Text -> IO ()
 post status = post_ $ update status
@@ -128,23 +126,31 @@ oauthPin = do
     , "export OAUTH_ACCESS_SECRET=\"" <> fromMaybe "" (lookup "oauth_token_secret" cred) <> "\""
     ]
 
-options :: [OptDescr Flag]
-options = [ Option ['v']     ["verbose"] (NoArg Verbose)       "chatty output on stderr"
- , Option ['V','?'] ["version"] (NoArg Version)       "show version number"
- , Option ['o']     ["output"]  (OptArg outp "FILE")  "output FILE"
- , Option ['c']     []          (OptArg inp  "FILE")  "input FILE"
- , Option ['L']     ["libdir"]  (ReqArg LibDir "DIR") "library directory"
+data Options = Options {
+   optReplyTo     :: Maybe Integer
+ , optRetweetTo   :: Maybe Integer
+ , optFavTo       :: Maybe Integer
+ , optUserTimeLine :: Maybe String
+ } deriving Show
+
+defaultOptions :: Options
+defaultOptions    = Options {
+   optReplyTo      = Nothing
+ , optRetweetTo    = Nothing
+ , optFavTo        = Nothing
+ , optUserTimeLine = Nothing
+ }
+
+options :: [OptDescr (Options -> Options)]
+options = [
+   Option ['r'] ["reply"]   (ReqArg (\sid opts -> opts { optReplyTo = Just (read sid) }) "ID MESSAGE") "in reply to ID"
+ , Option ['R'] ["retweet"] (ReqArg (\sid opts -> opts { optRetweetTo = Just (read sid) }) "ID") "retweet ID"
+ , Option ['u'] ["user"]    (ReqArg (\u opts -> opts { optUserTimeLine = Just u }) "USER") "show user timeline"
+ , Option ['f'] ["fav"]     (ReqArg (\sid opts -> opts { optFavTo = Just (read sid) }) "ID") "fav to ID"
  ]
 
-inp,outp :: Maybe String -> Flag
-outp = Output . fromMaybe "stdout"
-inp  = Input  . fromMaybe "stdin"
-
-data Flag = Verbose | Version | Input String | Output String | LibDir String deriving Show
-
-compilerOpts :: [String] -> IO ([Flag], [String])
-compilerOpts argv = 
-   case getOpt Permute options argv of
-      (o,n,[]  ) -> return (o,n)
-      (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
+compilerOpts :: [String] -> IO (Options, [String])
+compilerOpts argv = case getOpt Permute options argv of
+  (o,n,[] ) -> return (foldl (flip id) defaultOptions o, n)
+  (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
   where header = "Usage: ic [OPTION...] files..."
