@@ -184,4 +184,4 @@ compilerOpts :: [String] -> IO (Options, [String])
 compilerOpts argv = case getOpt Permute options argv of
   (o,n,[] ) -> return (foldl (flip id) defaultOptions o, n)
   (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
-  where header = "Usage: ic [OPTION...] files..."
+  where header = "Usage: twhs [OPTION...] [STATUS..]"
