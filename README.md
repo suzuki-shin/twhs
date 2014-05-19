@@ -1,5 +1,5 @@
 # twhs
 
-This is Cli twitter client.
+This is cli twitter client.
 
 
