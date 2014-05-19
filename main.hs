@@ -50,7 +50,9 @@ action = do
         Just rtId -> retweet rtId
         Nothing -> case optFavTo opt of
           Just favTo -> fav favTo
-          Nothing -> tweet status
+          Nothing -> if null mess
+                     then homeTL 30
+                     else tweet status
 
 tweet :: T.Text -> IO ()
 tweet status = post_ $ update status
