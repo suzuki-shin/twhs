@@ -26,6 +26,9 @@ import System.Console.GetOpt
 import Common
 import qualified TwhsConfig as Config (oauthConsumerKey, oauthConsumerSecret)
 
+type TweetID = Integer
+type UserScreenName = String
+
 main :: IO ()
 main = do
   aTokenExists <- isJust <$> lookupEnv "OAUTH_ACCESS_TOKEN"
@@ -37,50 +40,78 @@ main = do
 action :: IO ()
 action = do
   argv <- getArgs
-  a@(option, mess) <- compilerOpts argv
-  print a
-  print "hgoe"
+  (opt, mess) <- compilerOpts argv
+  let status = (T.intercalate " " . map T.pack) mess
+  case optReplyTo opt of
+    Just replyTo -> reply replyTo status
+    Nothing -> case optUserTimeLine opt of
+      Just uname -> userTL uname 30
+      Nothing -> case optRetweet opt of
+        Just rtId -> retweet rtId
+        Nothing -> case optFavTo opt of
+          Just favTo -> fav favTo
+          Nothing -> tweet status
 
-post :: T.Text -> IO ()
-post status = post_ $ update status
+tweet :: T.Text -> IO ()
+tweet status = post_ $ update status
 
-reply :: Integer -> T.Text -> IO ()
+reply :: TweetID -> T.Text -> IO ()
 reply replyTo status = post_ (update status & inReplyToStatusId ?~ replyTo)
+
+retweet :: TweetID -> IO ()
+retweet rtId = runTwitterFromEnv' $ do
+  liftIO $ T.putStrLn $ "retweet " <> (T.pack . show) rtId <> "[y/N]"
+  ans <- liftIO getLine
+  if ans == "y"
+    then do
+      res <- call $ retweetId rtId
+      liftIO $ print res
+    else liftIO $ T.putStrLn "canceled."
+
+fav :: TweetID -> IO ()
+fav favTo = runTwitterFromEnv' $ do
+  liftIO $ T.putStrLn $ "fav to " <> (T.pack . show) favTo <> "[y/N]"
+  ans <- liftIO getLine
+  if ans == "y"
+    then do
+      res <- call $ favoritesCreate favTo
+      liftIO $ print res
+    else liftIO $ T.putStrLn "canceled."
 
 -- post_ :: forall (m :: * -> *) apiName a.
 --          (Show a, MonadBaseControl IO m, MonadIO m, C.MonadUnsafeIO m,
 --           C.MonadThrow m, Data.Aeson.Types.Class.FromJSON a) =>
 --          APIRequest apiName a -> m ()
 post_ update_status = runTwitterFromEnv' $ do
-  status <- (T.intercalate " ") . map T.pack <$> liftIO getArgs
+  status <- T.intercalate " " . map T.pack <$> liftIO getArgs
   liftIO $ T.putStrLn $ status <> "[y/N]"
   ans <- liftIO getLine
   if ans == "y"
     then do
       liftIO $ T.putStrLn $ "Post message: " <> status
-      res <- call $ update_status
+      res <- call update_status
       liftIO $ print res
     else liftIO $ T.putStrLn "canceled."
 
 
 homeTL :: Int -> IO ()
-homeTL n = timeline homeTimeline n
+homeTL = timeline homeTimeline
 
 mentionTL :: Int -> IO ()
-mentionTL n = timeline mentionsTimeline n
+mentionTL = timeline mentionsTimeline
 
-userTL :: String -> Int -> IO ()
-userTL uName n = timeline (userTimeline (ScreenNameParam uName)) n
+userTL :: UserScreenName -> Int -> IO ()
+userTL uName = timeline (userTimeline (ScreenNameParam uName))
 
 timeline :: forall (m :: * -> *) apiName.
             (HasMaxIdParam (APIRequest apiName [Status]),
              MonadBaseControl IO m, MonadIO m, C.MonadUnsafeIO m,
              C.MonadThrow m) =>
             APIRequest apiName [Status] -> Int -> m ()
-timeline timeline_ n = runTwitterFromEnv' $ do
+timeline timeline_ n = runTwitterFromEnv' $
   sourceWithMaxId timeline_
     C.$= CL.isolate n
-    C.$$ CL.mapM_ $ \status -> liftIO $ do
+    C.$$ CL.mapM_ $ \status -> liftIO $
       T.putStrLn $ T.concat [ T.pack . show $ status ^. statusId
                             , ": "
                             , status ^. statusUser . userScreenName
@@ -127,26 +158,26 @@ oauthPin = do
     ]
 
 data Options = Options {
-   optReplyTo     :: Maybe Integer
- , optRetweetTo   :: Maybe Integer
- , optFavTo       :: Maybe Integer
+   optReplyTo      :: Maybe Integer
+ , optRetweet      :: Maybe Integer
+ , optFavTo        :: Maybe Integer
  , optUserTimeLine :: Maybe String
  } deriving Show
 
 defaultOptions :: Options
 defaultOptions    = Options {
    optReplyTo      = Nothing
- , optRetweetTo    = Nothing
+ , optRetweet      = Nothing
  , optFavTo        = Nothing
  , optUserTimeLine = Nothing
  }
 
 options :: [OptDescr (Options -> Options)]
 options = [
-   Option ['r'] ["reply"]   (ReqArg (\sid opts -> opts { optReplyTo = Just (read sid) }) "ID MESSAGE") "in reply to ID"
- , Option ['R'] ["retweet"] (ReqArg (\sid opts -> opts { optRetweetTo = Just (read sid) }) "ID") "retweet ID"
- , Option ['u'] ["user"]    (ReqArg (\u opts -> opts { optUserTimeLine = Just u }) "USER") "show user timeline"
- , Option ['f'] ["fav"]     (ReqArg (\sid opts -> opts { optFavTo = Just (read sid) }) "ID") "fav to ID"
+   Option "r" ["reply"]   (ReqArg (\sid opts -> opts { optReplyTo = Just (read sid) }) "ID MESSAGE") "in reply to ID"
+ , Option "R" ["retweet"] (ReqArg (\sid opts -> opts { optRetweet = Just (read sid) }) "ID") "retweet ID"
+ , Option "u" ["user"]    (ReqArg (\u opts -> opts { optUserTimeLine = Just u }) "USER") "show user timeline"
+ , Option "f" ["fav"]     (ReqArg (\sid opts -> opts { optFavTo = Just (read sid) }) "ID") "fav to ID"
  ]
 
 compilerOpts :: [String] -> IO (Options, [String])
