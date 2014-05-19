@@ -1,1 +1,5 @@
-# This is my README
+# twhs
+
+This is Cli twitter client.
+
+
