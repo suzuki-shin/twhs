@@ -42,16 +42,17 @@ action = do
   argv <- getArgs
   (opt, mess) <- compilerOpts argv
   let status = (T.intercalate " " . map T.pack) mess
+      num = optNum opt
   case optReplyTo opt of
     Just replyTo -> reply replyTo status
     Nothing -> case optUserTimeLine opt of
-      Just uname -> userTL uname 30
+      Just uname -> userTL uname num
       Nothing -> case optRetweet opt of
         Just rtId -> retweet rtId
         Nothing -> case optFavTo opt of
           Just favTo -> fav favTo
           Nothing -> if null mess
-                     then homeTL 30
+                     then homeTL num
                      else tweet status
 
 tweet :: T.Text -> IO ()
@@ -164,6 +165,7 @@ data Options = Options {
  , optRetweet      :: Maybe Integer
  , optFavTo        :: Maybe Integer
  , optUserTimeLine :: Maybe String
+ , optNum          :: Int
  } deriving Show
 
 defaultOptions :: Options
@@ -172,6 +174,7 @@ defaultOptions    = Options {
  , optRetweet      = Nothing
  , optFavTo        = Nothing
  , optUserTimeLine = Nothing
+ , optNum          = 30
  }
 
 options :: [OptDescr (Options -> Options)]
@@ -180,6 +183,7 @@ options = [
  , Option "R" ["retweet"] (ReqArg (\sid opts -> opts { optRetweet = Just (read sid) }) "ID") "retweet ID"
  , Option "u" ["user"]    (ReqArg (\u opts -> opts { optUserTimeLine = Just u }) "USER") "show user timeline"
  , Option "f" ["fav"]     (ReqArg (\sid opts -> opts { optFavTo = Just (read sid) }) "ID") "fav to ID"
+ , Option "n" ["num"]   (ReqArg (\num opts -> opts { optNum = read num }) "NUM") "take NUM"
  ]
 
 compilerOpts :: [String] -> IO (Options, [String])
