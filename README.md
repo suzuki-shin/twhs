@@ -2,4 +2,3 @@
 
 This is cli twitter client.
 
-
