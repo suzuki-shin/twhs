@@ -1,4 +1,4 @@
-module TwhsConfig (oauthConsumerKey, oauthConsumerSecret) where
+module Web.Twitter.Twhs.Config (oauthConsumerKey, oauthConsumerSecret) where
 
 oauthConsumerKey :: String
 oauthConsumerKey = "UoNgjgh43ukUCkKBtCAFNYg96"

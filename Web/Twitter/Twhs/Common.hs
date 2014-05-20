@@ -2,7 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Common where
+module Web.Twitter.Twhs.Common where
 
 import Web.Twitter.Conduit
 
@@ -20,7 +20,7 @@ import System.Environment
 import Control.Monad.Logger
 import Control.Lens
 
-import qualified TwhsConfig as Config (oauthConsumerKey, oauthConsumerSecret)
+import qualified Web.Twitter.Twhs.Config as Config (oauthConsumerKey, oauthConsumerSecret)
 
 getOAuthTokens :: IO (OAuth, Credential)
 getOAuthTokens = do

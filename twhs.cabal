@@ -18,7 +18,9 @@ cabal-version:       >=1.10
 
 executable twhs
   main-is:             main.hs
-  -- other-modules:       
+  other-modules:       Web.Twitter.Twhs
+                     , Web.Twitter.Twhs.Common
+                     , Web.Twitter.Twhs.Config
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
                      , twitter-conduit
@@ -37,9 +39,5 @@ executable twhs
                      , case-insensitive ==1.0.0.1
                      , containers ==0.5.0.0
                      , network
---                      , 
---                      , 
---                      , 
---                      , 
   -- hs-source-dirs:      
   default-language:    Haskell2010
