@@ -39,13 +39,15 @@ action = do
     Just replyTo -> reply replyTo status
     Nothing -> case optUserTimeLine opt of
       Just uname -> userTL uname num
-      Nothing -> case optRetweet opt of
-        Just rtId -> retweet rtId
-        Nothing -> case optFavTo opt of
-          Just favTo -> fav favTo
-          Nothing -> if null mess
-                     then homeTL num
-                     else tweet status
+      Nothing -> if optMentionTimeLine opt
+        then mentionTL num
+        else case optRetweet opt of
+          Just rtId -> retweet rtId
+          Nothing -> case optFavTo opt of
+            Just favTo -> fav favTo
+            Nothing -> if null mess
+                       then homeTL num
+                       else tweet status
 
 tweet :: T.Text -> IO ()
 tweet status = post_ $ update status
@@ -153,20 +155,22 @@ oauthPin = do
     ]
 
 data Options = Options {
-   optReplyTo      :: Maybe Integer
- , optRetweet      :: Maybe Integer
- , optFavTo        :: Maybe Integer
+   optReplyTo :: Maybe Integer
+ , optRetweet :: Maybe Integer
+ , optFavTo :: Maybe Integer
  , optUserTimeLine :: Maybe String
- , optNum          :: Int
+ , optMentionTimeLine :: Bool
+ , optNum :: Int
  } deriving Show
 
 defaultOptions :: Options
-defaultOptions    = Options {
-   optReplyTo      = Nothing
- , optRetweet      = Nothing
- , optFavTo        = Nothing
+defaultOptions = Options {
+   optReplyTo = Nothing
+ , optRetweet = Nothing
+ , optFavTo = Nothing
  , optUserTimeLine = Nothing
- , optNum          = 30
+ , optMentionTimeLine = False
+ , optNum = 30
  }
 
 options :: [OptDescr (Options -> Options)]
@@ -174,8 +178,9 @@ options = [
    Option "r" ["reply"]   (ReqArg (\sid opts -> opts { optReplyTo = Just (read sid) }) "ID MESSAGE") "in reply to ID"
  , Option "R" ["retweet"] (ReqArg (\sid opts -> opts { optRetweet = Just (read sid) }) "ID") "retweet ID"
  , Option "u" ["user"]    (ReqArg (\u opts -> opts { optUserTimeLine = Just u }) "USER") "show user timeline"
+ , Option "m" ["mention"] (NoArg (\opts -> opts { optMentionTimeLine = True })) "show mention timeline"
  , Option "f" ["fav"]     (ReqArg (\sid opts -> opts { optFavTo = Just (read sid) }) "ID") "fav to ID"
- , Option "n" ["num"]   (ReqArg (\num opts -> opts { optNum = read num }) "NUM") "take NUM"
+ , Option "n" ["num"]     (ReqArg (\num opts -> opts { optNum = read num }) "NUM") "take NUM"
  ]
 
 compilerOpts :: [String] -> IO (Options, [String])
