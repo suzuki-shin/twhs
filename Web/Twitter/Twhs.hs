@@ -199,12 +199,12 @@ usage = usageInfo header options ++ footer
   where
     header = "Usage: twhs [OPTION...]\n"
     footer = "\n" ++
-             "Example:\n" ++
-             " # tweet\n" ++
-             " twhs Lunch now!\n" ++
-             " # get timeline\n" ++
-             " twhs -n 50\n" ++
-             " # get user timeline\n" ++
-             " twhs -u shin16s -n 10\n" ++
-             " # in reply to \n" ++
-             " twhs -r 123456 ok! let's go\n"
+             "Example:\n\n" ++
+             "  -- tweet\n" ++
+             "  $ twhs Lunch now!\n\n" ++
+             "  -- get timeline\n" ++
+             "  $ twhs -n 50\n\n" ++
+             "  -- get user timeline\n" ++
+             "  $ twhs -u shin16s -n 10\n\n" ++
+             "  -- in reply to \n" ++
+             "  $ twhs -r 123456 ok! let's go\n"
