@@ -45,9 +45,9 @@ action = do
           Just rtId -> retweet rtId
           Nothing -> case optFavTo opt of
             Just favTo -> fav favTo
-            Nothing -> if null mess
-                       then homeTL num
-                       else tweet status
+            Nothing | optHelp opt -> showHelp
+                    | null mess -> homeTL num
+                    | otherwise -> tweet status
 
 tweet :: T.Text -> IO ()
 tweet status = post_ $ update status
@@ -116,6 +116,8 @@ timeline timeline_ n = runTwitterFromEnv' $
                             , status ^. statusText
                             ]
 
+showHelp :: IO ()
+showHelp = putStr usage
 
 getTokens :: IO OAuth
 getTokens = do
@@ -161,6 +163,7 @@ data Options = Options {
  , optUserTimeLine :: Maybe String
  , optMentionTimeLine :: Bool
  , optNum :: Int
+ , optHelp :: Bool
  } deriving Show
 
 defaultOptions :: Options
@@ -171,6 +174,7 @@ defaultOptions = Options {
  , optUserTimeLine = Nothing
  , optMentionTimeLine = False
  , optNum = 30
+ , optHelp = False
  }
 
 options :: [OptDescr (Options -> Options)]
@@ -181,6 +185,7 @@ options = [
  , Option "m" ["mention"] (NoArg (\opts -> opts { optMentionTimeLine = True })) "show mention timeline"
  , Option "f" ["fav"]     (ReqArg (\sid opts -> opts { optFavTo = Just (read sid) }) "ID") "fav to ID"
  , Option "n" ["num"]     (ReqArg (\num opts -> opts { optNum = read num }) "NUM") "take NUM"
+ , Option "h" ["help"]    (NoArg (\opts -> opts { optHelp = True })) "show help"
  ]
 
 compilerOpts :: [String] -> IO (Options, [String])
@@ -188,3 +193,18 @@ compilerOpts argv = case getOpt Permute options argv of
   (o,n,[] ) -> return (foldl (flip id) defaultOptions o, n)
   (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
   where header = "Usage: twhs [OPTION...] [STATUS..]"
+
+usage :: String
+usage = usageInfo header options ++ footer
+  where
+    header = "Usage: twhs [OPTION...]\n"
+    footer = "\n" ++
+             "Example:\n" ++
+             " # tweet\n" ++
+             " twhs Lunch now!\n" ++
+             " # get timeline\n" ++
+             " twhs -n 50\n" ++
+             " # get user timeline\n" ++
+             " twhs -u shin16s -n 10\n" ++
+             " # in reply to \n" ++
+             " twhs -r 123456 ok! let's go\n"
