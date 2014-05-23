@@ -4,7 +4,7 @@
 
 ## About ##
 
-This is cli twitter client.
+This is cli twitter client. Inspired by Tw (http://shokai.github.io/tw/)
 
 ## Usage ##
 
