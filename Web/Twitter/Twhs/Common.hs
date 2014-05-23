@@ -2,7 +2,10 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Web.Twitter.Twhs.Common where
+module Web.Twitter.Twhs.Common (
+    oauthPin
+  , runTwitterFromEnv'
+  ) where
 
 import Web.Twitter.Conduit
 
@@ -19,6 +22,10 @@ import Control.Monad.Trans.Resource
 import System.Environment
 import Control.Monad.Logger
 import Control.Lens
+import Data.Maybe
+import Data.Monoid
+import System.IO (hFlush, stdout)
+import qualified Data.Conduit as C
 
 import qualified Web.Twitter.Twhs.Config as Config (oauthConsumerKey, oauthConsumerSecret)
 
@@ -62,3 +69,41 @@ runTwitterFromEnv task = do
 
 runTwitterFromEnv' :: (MonadIO m, MonadBaseControl IO m) => TW (ResourceT (NoLoggingT m)) a -> m a
 runTwitterFromEnv' = runNoLoggingT . runTwitterFromEnv
+
+
+getTokens :: IO OAuth
+getTokens = do
+  let consumerKey = Config.oauthConsumerKey
+      consumerSecret = Config.oauthConsumerSecret
+  return $ twitterOAuth {
+      oauthConsumerKey = S8.pack consumerKey
+    , oauthConsumerSecret = S8.pack consumerSecret
+    , oauthCallback = Just "oob"
+    }
+
+authorize :: (MonadBaseControl IO m, C.MonadResource m)
+          => OAuth -- ^ OAuth Consumer key and secret
+          -> Manager
+          -> m Credential
+authorize oauth mgr = do
+  cred <- OA.getTemporaryCredential oauth mgr
+  let url = OA.authorizeUrl oauth cred
+  pin <- getPIN url
+  OA.getAccessToken oauth (OA.insert "oauth_verifier" pin cred) mgr
+  where
+    getPIN url = liftIO $ do
+      putStrLn $ "browse URL: " ++ url
+      putStr "> what was the PIN twitter provided you with? "
+      hFlush stdout
+      S8.getLine
+
+oauthPin :: IO ()
+oauthPin = do
+  tokens <- getTokens
+  Credential cred <- liftIO $ withManager $ authorize tokens
+  print cred
+
+  S8.putStrLn . S8.intercalate "\n" $
+    [ "export OAUTH_ACCESS_TOKEN=\"" <> fromMaybe "" (lookup "oauth_token" cred) <> "\""
+    , "export OAUTH_ACCESS_SECRET=\"" <> fromMaybe "" (lookup "oauth_token_secret" cred) <> "\""
+    ]
