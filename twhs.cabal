@@ -2,13 +2,13 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                twhs
-version:             0.1.0.0
+version:             0.1.0.1
 -- synopsis:            
 -- description:         
 homepage:            http://twitter.com/shin16s
 license:             MIT
 license-file:        LICENSE
-author:              Shinichiro Suzuki
+author:              SUZUKI Shinichiro
 maintainer:          shinichiro.su@gmail.com
 -- copyright:           
 category:            Web
@@ -21,6 +21,7 @@ executable twhs
   other-modules:       Web.Twitter.Twhs
                      , Web.Twitter.Twhs.Common
                      , Web.Twitter.Twhs.Config
+                     , Paths_twhs
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
                      , twitter-conduit

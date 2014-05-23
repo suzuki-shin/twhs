@@ -22,6 +22,9 @@ import qualified Data.Conduit.List as CL
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import System.Console.GetOpt
+import Data.Version (showVersion)
+import Paths_twhs (version)
+
 
 import Web.Twitter.Twhs.Common
 import qualified Web.Twitter.Twhs.Config as Config (oauthConsumerKey, oauthConsumerSecret)
@@ -197,7 +200,7 @@ compilerOpts argv = case getOpt Permute options argv of
 usage :: String
 usage = usageInfo header options ++ footer
   where
-    header = "Usage: twhs [OPTION...]\n"
+    header = "twhs " ++ showVersion version ++ "\nThis is a command line interface to Twitter.\nUsage: twhs [OPTION...]\n"
     footer = "\n" ++
              "Example:\n\n" ++
              "  -- tweet\n" ++
