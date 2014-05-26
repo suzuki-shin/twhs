@@ -25,7 +25,7 @@ CLI twitter client. Inspired by Tw (http://shokai.github.io/tw/)
 $ twhs Lunch now!
 ```
 ```
-# get timeline
+# get timeline only 50 lines
 $ twhs -n 50
 ```
 ```
