@@ -9,7 +9,9 @@ CLI twitter client. Inspired by Tw (http://shokai.github.io/tw/)
 ![スクリーンショット](https://dl.dropboxusercontent.com/u/2544479/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202014-06-02%2013.44.20.png)
 
 ## Install ##
+```
 $ cabal update && cabal install twhs
+```
 
 ## Example ##
 
