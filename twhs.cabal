@@ -3,7 +3,7 @@
 
 name:                twhs
 version:             0.1.0.3
--- synopsis:            
+synopsis:            CLI twitter client.
 description:         See <https://github.com/suzuki-shin/twhs/blob/master/README.md>
 homepage:            https://github.com/suzuki-shin/twhs
 license:             MIT
