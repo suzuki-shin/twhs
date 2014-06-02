@@ -25,6 +25,7 @@ import Control.Monad.Trans.Control
 import Data.Monoid
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
+import System.Console.ANSI
 
 import Web.Twitter.Twhs.Common
 import Web.Twitter.Twhs.Option
@@ -91,13 +92,20 @@ timeline :: forall (m :: * -> *) apiName.
 timeline timeline_ n = runTwitterFromEnv' $
   sourceWithMaxId timeline_
     C.$= CL.isolate n
-    C.$$ CL.mapM_ $ \status -> liftIO $
-      T.putStrLn $ T.concat [ T.pack . show $ status ^. statusId
-                            , ": "
-                            , status ^. statusUser . userScreenName
-                            , ": "
-                            , status ^. statusText
-                            ]
+    C.$$ CL.mapM_ $ \status -> liftIO $ do
+      colorStr Vivid Blue Dull Black $ show $ status ^. statusId
+      colorStr Vivid White Dull Black $ ": "
+      colorStr Vivid Yellow Dull Black $ T.unpack $ status ^. statusUser . userScreenName
+      colorStr Vivid White Dull Black $ ": "
+      colorStr Vivid White Dull Black $ T.unpack $ status ^. statusText
+      putStrLn ""
 
 showHelp :: IO ()
 showHelp = putStr usage
+
+
+colorStr :: ColorIntensity -> Color -> ColorIntensity -> Color -> String -> IO ()
+colorStr fgi fg bgi bg str = do
+  setSGR [SetColor Foreground fgi fg, SetColor Background bgi bg]
+  putStr str
+  setSGR []

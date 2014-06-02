@@ -39,6 +39,7 @@ library
                      , case-insensitive
                      , containers
                      , network
+                     , ansi-terminal
   default-language:    Haskell2010
 
 executable twhs
@@ -61,6 +62,7 @@ executable twhs
                      , case-insensitive
                      , containers
                      , network
+                     , ansi-terminal
   -- hs-source-dirs:      
   default-language:    Haskell2010
 
