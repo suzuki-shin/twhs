@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                twhs
-version:             0.1.0.3
+version:             0.2.0.0
 synopsis:            CLI twitter client.
 description:         See <https://github.com/suzuki-shin/twhs/blob/master/README.md>
 homepage:            https://github.com/suzuki-shin/twhs
@@ -23,7 +23,8 @@ library
                      , Web.Twitter.Twhs.Config
                      , Paths_twhs
   build-depends:       base >=4.6 && <4.7
-                     , twitter-conduit
+                     , twitter-conduit ==0.1.0
+                     , twitter-types-lens ==0.6.0
                      , authenticate-oauth >=1.4.0.8
                      , transformers
                      , resourcet
@@ -46,7 +47,8 @@ executable twhs
   main-is:             main.hs
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
-                     , twitter-conduit
+                     , twitter-conduit >=0.1.0
+                     , twitter-types-lens ==0.6.0
                      , authenticate-oauth >=1.4.0.8
                      , transformers
                      , resourcet

@@ -4,7 +4,7 @@
 
 module Web.Twitter.Twhs.Common (
     oauthPin
-  , runTwitterFromEnv'
+  , getTWInfoFromEnv
   ) where
 
 import Web.Twitter.Conduit
@@ -17,15 +17,15 @@ import qualified Data.ByteString.Char8 as S8
 import qualified Data.CaseInsensitive as CI
 import Control.Applicative
 import Control.Monad.IO.Class
-import Control.Monad.Base
+-- import Control.Monad.Base
 import Control.Monad.Trans.Resource
 import System.Environment
-import Control.Monad.Logger
+-- import Control.Monad.Logger
 import Control.Lens
 import Data.Maybe
 import Data.Monoid
 import System.IO (hFlush, stdout)
-import qualified Data.Conduit as C
+-- import qualified Data.Conduit as C
 
 import qualified Web.Twitter.Twhs.Config as Config (oauthConsumerKey, oauthConsumerSecret)
 
@@ -47,6 +47,25 @@ getOAuthTokens = do
   where
     getEnv' = (S8.pack <$>) . getEnv
 
+-- getOAuthTokens :: IO (OAuth, Credential)
+-- getOAuthTokens = do
+--     accessToken <- getEnv' "OAUTH_ACCESS_TOKEN"
+--     accessSecret <- getEnv' "OAUTH_ACCESS_SECRET"
+--     let consumerKey = S8.pack Config.oauthConsumerKey
+--         consumerSecret = S8.pack Config.oauthConsumerSecret
+--         oauth = twitterOAuth
+--             { oauthConsumerKey = consumerKey
+--             , oauthConsumerSecret = consumerSecret
+--             }
+--         cred = Credential
+--             [ ("oauth_token", accessToken)
+--             , ("oauth_token_secret", accessSecret)
+--             ]
+--     return (oauth, cred)
+--   where
+--     getEnv' = (S8.pack <$>) . getEnv
+
+
 getProxyEnv :: IO (Maybe Proxy)
 getProxyEnv = do
     env <- M.fromList . over (mapped . _1) CI.mk <$> getEnvironment
@@ -60,16 +79,15 @@ getProxyEnv = do
     parsePort (':':xs) = read xs
     parsePort xs       = error $ "port number parse failed " ++ xs
 
-runTwitterFromEnv :: (MonadIO m, MonadBaseControl IO m) => TW (ResourceT m) a -> m a
-runTwitterFromEnv task = do
-    pr <- liftBase getProxyEnv
-    (oa, cred) <- liftBase getOAuthTokens
-    let env = (setCredential oa cred def) { twProxy = pr }
-    runTW env task
+-- runTwitterFromEnv :: (MonadIO m, MonadBaseControl IO m) => TW (ResourceT m) a -> m a
+-- runTwitterFromEnv task = do
+--     pr <- liftBase getProxyEnv
+--     (oa, cred) <- liftBase getOAuthTokens
+--     let env = (setCredential oa cred def) { twProxy = pr }
+--     runTW env task
 
-runTwitterFromEnv' :: (MonadIO m, MonadBaseControl IO m) => TW (ResourceT (NoLoggingT m)) a -> m a
-runTwitterFromEnv' = runNoLoggingT . runTwitterFromEnv
-
+-- runTwitterFromEnv' :: (MonadIO m, MonadBaseControl IO m) => TW (ResourceT (NoLoggingT m)) a -> m a
+-- runTwitterFromEnv' = runNoLoggingT . runTwitterFromEnv
 
 getTokens :: IO OAuth
 getTokens = do
@@ -81,7 +99,7 @@ getTokens = do
     , oauthCallback = Just "oob"
     }
 
-authorize :: (MonadBaseControl IO m, C.MonadResource m)
+authorize :: (MonadBaseControl IO m, MonadResource m)
           => OAuth -- ^ OAuth Consumer key and secret
           -> Manager
           -> m Credential
@@ -97,6 +115,7 @@ authorize oauth mgr = do
       hFlush stdout
       S8.getLine
 
+
 oauthPin :: IO ()
 oauthPin = do
   tokens <- getTokens
@@ -104,6 +123,13 @@ oauthPin = do
   print cred
 
   S8.putStrLn . S8.intercalate "\n" $
-    [ "export OAUTH_ACCESS_TOKEN=\"" <> fromMaybe "" (lookup "oauth_token" cred) <> "\""
-    , "export OAUTH_ACCESS_SECRET=\"" <> fromMaybe "" (lookup "oauth_token_secret" cred) <> "\""
+    [ "export OAUTH_ACCESS_TOKEN=\"" <> fromMaybe "" (Prelude.lookup "oauth_token" cred) <> "\""
+    , "export OAUTH_ACCESS_SECRET=\"" <> fromMaybe "" (Prelude.lookup "oauth_token_secret" cred) <> "\""
     ]
+
+
+getTWInfoFromEnv :: IO TWInfo
+getTWInfoFromEnv = do
+    pr <- getProxyEnv
+    (oa, cred) <- getOAuthTokens
+    return $ (setCredential oa cred def) { twProxy = pr }
