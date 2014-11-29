@@ -11,6 +11,7 @@ module Web.Twitter.Twhs.Command (
   , homeTL
   , mentionTL
   , userTL
+  , listStatuses
   , showHelp
   ) where
 
@@ -80,6 +81,7 @@ post_ update_status = do
       print res
     else liftIO $ T.putStrLn "canceled."
 
+
 homeTL :: Int -> IO ()
 homeTL = timeline homeTimeline
 
@@ -88,6 +90,11 @@ mentionTL = timeline mentionsTimeline
 
 userTL :: UserScreenName -> Int -> IO ()
 userTL uName = timeline (userTimeline (ScreenNameParam uName))
+
+
+listStatuses :: String -> Int -> IO ()
+listStatuses listName = timeline (listsStatuses (ListNameParam listName))
+
 
 -- timeline :: forall (m :: * -> *) apiName.
 --             (HasMaxIdParam (APIRequest apiName [Status]),
@@ -106,6 +113,7 @@ timeline timeline_ n = do
         colorStr Vivid White Dull Black ": "
         colorStr Vivid White Dull Black $ T.unpack $ status ^. statusText
         putStrLn ""
+
 
 showHelp :: IO ()
 showHelp = putStr usage

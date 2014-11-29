@@ -31,11 +31,13 @@ action = do
       Just uname -> userTL uname num
       Nothing -> if optMentionTimeLine opt
         then mentionTL num
-        else case optRetweet opt of
-          Just rtId -> retweet rtId
-          Nothing -> case optFavTo opt of
-            Just favTo -> fav favTo
-            Nothing | optHelp opt -> showHelp
-                    | null mess -> homeTL num
-                    | otherwise -> tweet status
+        else case optListStatuses opt of
+          Just listName -> listStatuses listName num
+          Nothing -> case optRetweet opt of
+            Just rtId -> retweet rtId
+            Nothing -> case optFavTo opt of
+              Just favTo -> fav favTo
+              Nothing | optHelp opt -> showHelp
+                      | null mess -> homeTL num
+                      | otherwise -> tweet status
 

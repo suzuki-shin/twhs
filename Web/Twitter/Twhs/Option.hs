@@ -4,6 +4,7 @@ module Web.Twitter.Twhs.Option (
   , optRetweet
   , optFavTo
   , optUserTimeLine
+  , optListStatuses
   , optMentionTimeLine
   , optNum
   , optHelp
@@ -19,6 +20,7 @@ data Options = Options {
  , optRetweet :: Maybe Integer
  , optFavTo :: Maybe Integer
  , optUserTimeLine :: Maybe String
+ , optListStatuses :: Maybe String
  , optMentionTimeLine :: Bool
  , optNum :: Int
  , optHelp :: Bool
@@ -30,6 +32,7 @@ defaultOptions = Options {
  , optRetweet = Nothing
  , optFavTo = Nothing
  , optUserTimeLine = Nothing
+ , optListStatuses = Nothing
  , optMentionTimeLine = False
  , optNum = 30
  , optHelp = False
@@ -40,6 +43,7 @@ options = [
    Option "r" ["reply"]   (ReqArg (\sid opts -> opts { optReplyTo = Just (read sid) }) "ID MESSAGE") "in reply to ID"
  , Option "R" ["retweet"] (ReqArg (\sid opts -> opts { optRetweet = Just (read sid) }) "ID") "retweet ID"
  , Option "u" ["user"]    (ReqArg (\u opts -> opts { optUserTimeLine = Just u }) "USER") "show user timeline"
+ , Option "l" ["list"]    (ReqArg (\l opts -> opts { optListStatuses = Just l }) "LIST") "show list statuses"
  , Option "m" ["mention"] (NoArg (\opts -> opts { optMentionTimeLine = True })) "show mention timeline"
  , Option "f" ["fav"]     (ReqArg (\sid opts -> opts { optFavTo = Just (read sid) }) "ID") "fav to ID"
  , Option "n" ["num"]     (ReqArg (\num opts -> opts { optNum = read num }) "NUM") "take NUM"
@@ -63,6 +67,8 @@ usage = usageInfo header options ++ footer
              "  $ twhs -n 50\n\n" ++
              "  -- get user timeline\n" ++
              "  $ twhs -u shin16s -n 10\n\n" ++
+             "  -- get list statuses\n" ++
+             "  $ twhs -l shin16s/haskeller -n 10\n\n" ++
              "  -- in reply to \n" ++
              "  $ twhs -r 123456 ok! let's go\n"
 
