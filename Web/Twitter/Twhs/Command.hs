@@ -18,38 +18,26 @@ module Web.Twitter.Twhs.Command (
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import System.Environment
 import Web.Twitter.Conduit
 import Web.Twitter.Types.Lens
 import Control.Applicative
 import Control.Lens
+import Control.Monad
 import Control.Monad.IO.Class
 import Data.Monoid
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import System.Console.ANSI
+import System.Environment
+import System.Process
+import System.Directory
+import System.FilePath
 import Network.HTTP.Conduit
+import Network.HTTP.Conduit as HTTP
+import qualified Data.Conduit.Binary as CB
 
 import Web.Twitter.Twhs.Common
 import Web.Twitter.Twhs.Option
-
-
-
-
-import Web.Twitter.Types.Lens
-import Control.Lens
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import System.Process
-import Control.Monad
-import System.Directory
-import System.FilePath
-import Network.HTTP.Conduit as HTTP
-import qualified Data.Conduit as C
-import qualified Data.Conduit.Binary as CB
-import qualified Data.Conduit.List as CL
-
-
 
 
 type TweetID = Integer
@@ -113,14 +101,10 @@ userTL uName = timeline (userTimeline (ScreenNameParam uName))
 
 
 listStatuses :: String -> Int -> IO ()
-listStatuses listName = timeline (listsStatuses (ListNameParam listName))
+listStatuses listName_ = timeline (listsStatuses (ListNameParam listName_))
 
 
--- timeline :: forall (m :: * -> *) apiName.
---             (HasMaxIdParam (APIRequest apiName [Status]),
---              MonadBaseControl IO m, MonadIO m, C.MonadUnsafeIO m,
---              C.MonadThrow m) =>
---             APIRequest apiName [Status] -> Int -> m ()
+timeline :: forall apiName. HasMaxIdParam (APIRequest apiName [Status]) => APIRequest apiName [Status] -> Int -> IO ()
 timeline timeline_ n = do
   twInfo <- getTWInfoFromEnv
   withManager $ \mgr -> do
@@ -139,9 +123,6 @@ showHelp :: IO ()
 showHelp = putStr usage
 
 
-
-
-
 putColorStr :: ColorIntensity -> Color -> ColorIntensity -> Color -> String -> IO ()
 putColorStr fgi fg bgi bg str = do
   setSGR [SetColor Foreground fgi fg, SetColor Background bgi bg]
@@ -149,6 +130,7 @@ putColorStr fgi fg bgi bg str = do
   setSGR []
 
 
+streaming :: IO ()
 streaming = do
   twInfo <- getTWInfoFromEnv
   withManager $ \mgr -> do
