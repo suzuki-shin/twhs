@@ -6,6 +6,7 @@ module Web.Twitter.Twhs.Option (
   , optUserTimeLine
   , optListStatuses
   , optMentionTimeLine
+  , optStreamTimeLine
   , optNum
   , optHelp
   , usage
@@ -22,6 +23,7 @@ data Options = Options {
  , optUserTimeLine :: Maybe String
  , optListStatuses :: Maybe String
  , optMentionTimeLine :: Bool
+ , optStreamTimeLine :: Bool
  , optNum :: Int
  , optHelp :: Bool
  } deriving Show
@@ -34,6 +36,7 @@ defaultOptions = Options {
  , optUserTimeLine = Nothing
  , optListStatuses = Nothing
  , optMentionTimeLine = False
+ , optStreamTimeLine = False
  , optNum = 30
  , optHelp = False
  }
@@ -46,6 +49,7 @@ options = [
  , Option "l" ["list"]    (ReqArg (\l opts -> opts { optListStatuses = Just l }) "LIST") "show list statuses"
  , Option "m" ["mention"] (NoArg (\opts -> opts { optMentionTimeLine = True })) "show mention timeline"
  , Option "f" ["fav"]     (ReqArg (\sid opts -> opts { optFavTo = Just (read sid) }) "ID") "fav to ID"
+ , Option "s" ["stream"]  (NoArg (\opts -> opts { optStreamTimeLine = True })) "streaming timeline"
  , Option "n" ["num"]     (ReqArg (\num opts -> opts { optNum = read num }) "NUM") "take NUM"
  , Option "h" ["help"]    (NoArg (\opts -> opts { optHelp = True })) "show help"
  ]

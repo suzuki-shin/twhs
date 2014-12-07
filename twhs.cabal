@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                twhs
-version:             0.2.0.2
+version:             0.2.0.3
 synopsis:            CLI twitter client.
 description:         See <https://github.com/suzuki-shin/twhs/blob/master/README.md>
 homepage:            https://github.com/suzuki-shin/twhs

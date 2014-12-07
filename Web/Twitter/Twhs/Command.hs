@@ -12,6 +12,7 @@ module Web.Twitter.Twhs.Command (
   , mentionTL
   , userTL
   , listStatuses
+  , streaming
   , showHelp
   ) where
 
@@ -126,11 +127,11 @@ timeline timeline_ n = do
     sourceWithMaxId twInfo mgr timeline_
       C.$= CL.isolate n
       C.$$ CL.mapM_ $ \status -> liftIO $ do
-        colorStr Vivid Blue Dull Black $ show $ status ^. statusId
-        colorStr Vivid White Dull Black ": "
-        colorStr Vivid Yellow Dull Black $ T.unpack $ status ^. statusUser . userScreenName
-        colorStr Vivid White Dull Black ": "
-        colorStr Vivid White Dull Black $ T.unpack $ status ^. statusText
+        putColorStr Vivid Blue Dull Black $ show $ status ^. statusId
+        putColorStr Vivid White Dull Black ": "
+        putColorStr Vivid Yellow Dull Black $ T.unpack $ status ^. statusUser . userScreenName
+        putColorStr Vivid White Dull Black ": "
+        putColorStr Vivid White Dull Black $ T.unpack $ status ^. statusText
         putStrLn ""
 
 
@@ -138,27 +139,40 @@ showHelp :: IO ()
 showHelp = putStr usage
 
 
-colorStr :: ColorIntensity -> Color -> ColorIntensity -> Color -> String -> IO ()
-colorStr fgi fg bgi bg str = do
+
+
+
+putColorStr :: ColorIntensity -> Color -> ColorIntensity -> Color -> String -> IO ()
+putColorStr fgi fg bgi bg str = do
   setSGR [SetColor Foreground fgi fg, SetColor Background bgi bg]
   putStr str
   setSGR []
 
 
-
-
 streaming = do
-    twInfo <- getTWInfoFromEnv
-    withManager $ \mgr -> do
-        src <- stream twInfo mgr userstream
-        src C.$$+- CL.mapM_ (^! act (liftIO . printTL))
+  twInfo <- getTWInfoFromEnv
+  withManager $ \mgr -> do
+    src <- stream twInfo mgr userstream
+    src C.$$+- CL.mapM_ (^! act (liftIO . printTL))
+
 
 printTL :: StreamingAPI -> IO ()
-printTL (SStatus s) = T.putStrLn . showStatus $ s
-printTL (SRetweetedStatus s) = T.putStrLn $ T.concat [ s ^. user . userScreenName
-                                                     , ": RT @"
-                                                     , showStatus (s ^. rsRetweetedStatus)
-                                                     ]
+printTL (SStatus status) = liftIO $ do
+  putColorStr Vivid Blue Dull Black $ show $ status ^. statusId
+  putColorStr Vivid White Dull Black ": "
+  putColorStr Vivid Yellow Dull Black $ T.unpack $ status ^. statusUser . userScreenName
+  putColorStr Vivid White Dull Black ": "
+  putColorStr Vivid White Dull Black $ T.unpack $ status ^. statusText
+  putStrLn ""
+printTL (SRetweetedStatus status) = liftIO $ do
+  putColorStr Vivid Blue Dull Black $ show $ status ^. rsId
+  putColorStr Vivid White Dull Black ": "
+  putColorStr Vivid Yellow Dull Black $ T.unpack $ status ^. user . userScreenName
+  putColorStr Vivid White Dull Black ": "
+  putColorStr Vivid Black Vivid Green "RT"
+  putColorStr Vivid White Dull Black " @"
+  putColorStr Vivid White Dull Black $ T.unpack $ showStatus $ status ^. rsRetweetedStatus
+  putStrLn ""
 printTL (SEvent event)
     | (event^.evEvent) == "favorite" || (event^.evEvent) == "unfavorite",
       Just (ETStatus st) <- (event ^. evTargetObject) = do
@@ -179,6 +193,7 @@ showStatus s = T.concat [ s ^. user . userScreenName
                         , ":"
                         , s ^. text
                         ]
+
 
 notifySend :: T.Text -> T.Text -> Maybe FilePath -> IO ()
 notifySend header content icon = do
@@ -208,4 +223,3 @@ ensureDirectoryExist dir = do
 
 confdir :: IO FilePath
 confdir = fmap (</> ".twitter-conduit") getHomeDirectory >>= ensureDirectoryExist
-
