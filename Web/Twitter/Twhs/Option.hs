@@ -74,7 +74,7 @@ usage = usageInfo header options ++ footer
              "  -- get list statuses\n" ++
              "  $ twhs -l shin16s/haskeller -n 10\n\n" ++
              "  -- in reply to \n" ++
-             "  $ twhs -r 123456 ok! let's go\n" ++
+             "  $ twhs -r 123456 ok! let's go\n\n" ++
              "  -- stream \n" ++
              "  $ twhs -s\n"
 

@@ -38,8 +38,10 @@ $ twhs -r 123456 ok! let's go
   -r ID MESSAGE  --reply=ID MESSAGE  in reply to ID
   -R ID          --retweet=ID        retweet ID
   -u USER        --user=USER         show user timeline
+  -l LIST        --list=LIST         show list statuses
   -m             --mention           show mention timeline
   -f ID          --fav=ID            fav to ID
+  -s             --stream            streaming timeline
   -n NUM         --num=NUM           take NUM
   -h             --help              show help
 ```
